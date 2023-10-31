@@ -1,5 +1,5 @@
 // Function to process the Markdown table with modified headers and data rows
-function processMarkdownTable(markdownTable, calloutType = "info", calloutHeading = "Flashcard") {
+function processMarkdownTable(markdownTable) {
     // Split the table into rows
     const rows = markdownTable.trim().split('\n');
     const modifiedRows = [];
@@ -15,27 +15,32 @@ function processMarkdownTable(markdownTable, calloutType = "info", calloutHeadin
         const cells = cleanRow(rows[i]);
         
         for (let j = 0; j < cells.length; j++) {
-            const newRow = cells.map((cell, index) => {
-                // if (index === 0) {
-                //     // Modify the first cell (infinitive form) by adding 'å' before the verb
-                //     cell = `å ${cell}`;
-                // }
+            const newRowQuestion = cells.map((cell, index) => {
                 if (j === index) {
-                    // Wrap the target cell with \=\= while preserving other cells
-                    return `==${cell}==`;
+                    return `---`;
+                } else {
+                    return cell;
+                }
+            });
+            const newRowAnswer = cells.map((cell, index) => {
+                if (j === index) {
+                    return `**${cell}**`;
                 } else {
                     return cell;
                 }
             });
 
-            // Construct the modified row
-            const modifiedRow = `| ${header} |\n| ${divider} |\n| ${newRow.join(' | ')} |`;
-            modifiedRows.push(formatTableInCallout(modifiedRow, calloutType, calloutHeading, `Fill out '${headerCells[j]}'.`));
+            const modifiedTableQuestion = `| ${header} |\n| ${divider} |\n| ${newRowQuestion.join(' | ')} |`;
+            const questionCallout = formatTableInCallout(modifiedTableQuestion, 'question', 'Question', `Fill out '${headerCells[j]}'.`);
+            const modifiedTableAnswer = `| ${header} |\n| ${divider} |\n| ${newRowAnswer.join(' | ')} |`;
+            const answerCallout = formatTableInCallout(modifiedTableAnswer, 'info', 'Answer', '__description__');
+
+            modifiedRows.push(formatFlashcard(questionCallout, answerCallout));
         }
     }
     
     // Join the modified rows into a single string with double line breaks to create the final Markdown table
-    const resultTable = modifiedRows.join('\n\n');
+    const resultTable = modifiedRows.join('\n\n---\n\n');
     return resultTable;
 }
 
@@ -54,6 +59,14 @@ function formatTableInCallout(markdownTable, calloutType, calloutHeading, callou
 
     return calloutBlock;
 }
+
+function formatFlashcard(question, answer) {
+    // Split the table into rows and add a `>` at the beginning of each line
+    const formattedQuestion = question.split('\n').map(line => `> ${line}`).join('\n');
+    const formattedAnswer = answer.split('\n').map(line => `> ${line}`).join('\n');
+
+    return `${formattedQuestion}\n?\n>\n${formattedAnswer}`;
+}
   
 const markdownTable = `
 | Adjektiv    | Komparativ | Superlativ |
@@ -71,6 +84,6 @@ const markdownTable = `
 | ille, vond  | verre      | verst      |
 `;
 
-const result = processMarkdownTable(markdownTable, "note");
+const result = processMarkdownTable(markdownTable);
 
 console.log(result);
